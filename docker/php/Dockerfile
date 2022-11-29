@@ -27,6 +27,12 @@ RUN apt update -y \
     && rm -rf /tmp/pear \
     && docker-php-ext-enable redis memcached
 
+<<<<<<< HEAD
+=======
+# composer install: https://hub.docker.com/_/composer?tab=description#php-extensions
+# COPY --from=composer /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
+>>>>>>> dca13f497265b8456e896e2d325ff339c044dd74
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN touch /var/log/cron.log

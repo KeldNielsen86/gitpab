@@ -30,7 +30,8 @@ class SpentRepositoryEloquent extends RepositoryAbstractEloquent
                 'note.gitlab_created_at',
                 'spent.spent_at',
                 'issue.iid as issue',
-                DB::raw("issue.title || CASE WHEN spent.description IS NOT NULL THEN ' |\n' || spent.description ELSE '' END as description")
+                DB::raw("issue.title || CASE WHEN spent.description IS NOT NULL THEN ' |\n' || spent.description ELSE '' END as description"),
+                'contributor.name as contributor'
             ])
             ->join('note', 'note.id', '=', 'spent.note_id')
             ->join('contributor', 'contributor.id', '=', 'note.author_id')
@@ -65,14 +66,14 @@ class SpentRepositoryEloquent extends RepositoryAbstractEloquent
         if ($dateStart = Arr::get($parameters, 'date_start'))
         {
             $date = new \DateTime($dateStart);
-            $query->where('note.gitlab_created_at', '>=', $date->format('Y-m-d'));
+            $query->where('spent.spent_at', '>=', $date->format('Y-m-d'));
         }
 
         if ($dateEnd = Arr::get($parameters, 'date_end'))
         {
             $date = new \DateTime($dateEnd);
             $date->add(new \DateInterval('P1D'));
-            $query->where('note.gitlab_created_at', '<', $date->format('Y-m-d'));
+            $query->where('spent.spent_at', '<', $date->format('Y-m-d'));
         }
 
         if ($labels = Arr::get($parameters, 'labels'))
@@ -94,7 +95,7 @@ class SpentRepositoryEloquent extends RepositoryAbstractEloquent
     {
         $query = $this->getListQuery($parameters);
         $query = $query->select([
-                DB::raw("date_trunc('second', max(note.gitlab_created_at)) as gitlab_created_at"),
+                DB::raw("date_trunc('second', max(spent.spent_at)) as gitlab_created_at"),
                 'issue.iid as issue',
                 'issue.title as title',
                 DB::raw('sum(spent.hours) as hours'),
@@ -114,23 +115,23 @@ class SpentRepositoryEloquent extends RepositoryAbstractEloquent
 
         $query = $query
             ->select([
-                'note.gitlab_created_at',
+                'spent.spent_at',
                 'project.path_with_namespace as project',
                 'issue.iid',
                 'issue.title as issue_title',
                 'spent.hours',
-                'spent.description as note_description',
+                'spent.description as note_description'
             ])
             ->join('note', 'note.id', '=', 'spent.note_id')
             ->join('issue', 'issue.id', '=', 'note.issue_id')
             ->join('project', 'project.id', '=', 'issue.project_id');
 
         if ($dateStart = Arr::get($parameters, 'date_start')) {
-            $query->where('note.gitlab_created_at', '>=', $dateStart);
+            $query->where('spent.spent_at', '>=', $dateStart);
         }
 
         if ($dateFinish = Arr::get($parameters, 'date_finish')) {
-            $query->where('note.gitlab_created_at', '<', $dateFinish);
+            $query->where('spent.spent_at', '<', $dateFinish);
         }
 
         if ($userId = Arr::get($parameters, 'user_id')) {
@@ -151,7 +152,7 @@ class SpentRepositoryEloquent extends RepositoryAbstractEloquent
 
         $query
             ->orderBy('issue.iid', 'asc')
-            ->orderBy('note.gitlab_created_at', 'asc');
+            ->orderBy('spent.spent_at', 'asc');
 
         return $query->get();
     }
